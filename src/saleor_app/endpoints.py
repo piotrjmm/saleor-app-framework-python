@@ -32,6 +32,7 @@ async def install(
     saleor_domain=Depends(saleor_domain_header),
 ):
     events = defaultdict(list)
+    subscription_query_dict = defaultdict(str)
     if hasattr(request.app, "webhook_router"):
         if request.app.webhook_router.http_routes:
             events[request.url_for("handle-webhook")] = list(
@@ -40,7 +41,12 @@ async def install(
         for event_type, sqs_handler in request.app.webhook_router.sqs_routes.items():
             key = str(sqs_handler.target_url)
             events[key].append(event_type)
-
+        if request.app.webhook_router.subscription_queries:
+            subscription_query = "subscription { event {"
+            for s in request.app.webhook_router.subscription_queries:
+                subscription_query += " " + s
+            subscription_query += " } }"
+            subscription_query_dict[request.url_for("handle-webhook")] = subscription_query
     if events:
         try:
             webhook_data = await install_app(
@@ -49,6 +55,7 @@ async def install(
                 manifest=request.app.manifest,
                 events=events,
                 use_insecure_saleor_http=request.app.use_insecure_saleor_http,
+                subscription_query_dict=subscription_query_dict
             )
         except (InstallAppError, GraphQLError) as exc:
             logger.debug(str(exc), exc_info=1)

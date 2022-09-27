@@ -35,7 +35,7 @@ class SaleorApp(FastAPI):
 
     def include_saleor_app_routes(self):
         self.configuration_router.get(
-            "/manifest", response_model=Manifest, name="manifest"
+            "/manifest", response_model=Manifest, name="manifest", response_model_exclude_none=True
         )(manifest)
         self.configuration_router.post(
             "/install",

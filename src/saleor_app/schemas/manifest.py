@@ -3,6 +3,7 @@ from typing import List, Optional, Union
 
 from pydantic import AnyHttpUrl, BaseModel, Field
 
+from saleor_app.schemas.handlers import SaleorEventType
 from saleor_app.schemas.utils import LazyPath, LazyUrl
 
 
@@ -34,6 +35,14 @@ class Extension(BaseModel):
         allow_population_by_field_name = True
 
 
+class Webhook(BaseModel):
+    name: str
+    async_events: SaleorEventType = Field(..., alias="asyncEvents")
+    query: Optional[str] = None
+    target_url: Union[AnyHttpUrl, LazyUrl] = Field(..., alias="targetUrl")
+    is_active: bool = Field(..., alias="isActive")
+
+
 class Manifest(BaseModel):
     id: str
     permissions: List[str]
@@ -52,6 +61,7 @@ class Manifest(BaseModel):
     token_target_url: Union[AnyHttpUrl, LazyUrl] = Field(
         LazyUrl("app-install"), alias="tokenTargetUrl"
     )
+    webhooks: List[Webhook]
 
     class Config:
         allow_population_by_field_name = True
